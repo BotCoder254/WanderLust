@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <!-- Booking Summary -->
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Booking Summary</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0 h-20 w-20">
+                        {% if tour.media and tour.media|length > 0 %}
+                        <img class="h-20 w-20 rounded-lg object-cover" src="{{ tour.media[0] }}" alt="{{ tour.name }}">
+                        {% else %}
+                        <div class="h-20 w-20 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <i class="fas fa-mountain text-indigo-600 text-3xl"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900">{{ tour.name }}</h4>
+                        <p class="text-sm text-gray-500">{{ tour.destination }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t border-gray-200 pt-6">
+                    <dl class="divide-y divide-gray-200">
+                        <div class="py-4 flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Start Date</dt>
+                            <dd class="text-sm text-gray-900">{{ booking.start_date }}</dd>
+                        </div>
+                        <div class="py-4 flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Number of People</dt>
+                            <dd class="text-sm text-gray-900">{{ booking.number_of_people }}</dd>
+                        </div>
+                        <div class="py-4 flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Price per Person</dt>
+                            <dd class="text-sm text-gray-900">${{ "%.2f"|format(tour.price) }}</dd>
+                        </div>
+                        <div class="py-4 flex justify-between">
+                            <dt class="text-lg font-medium text-gray-900">Total Price</dt>
+                            <dd class="text-lg font-bold text-indigo-600">${{ "%.2f"|format(booking.total_price) }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Payment Details</h3>
+            </div>
+            <form action="{{ url_for('process_payment_submit') }}" method="POST" class="px-4 py-5 sm:p-6 space-y-6">
+                <div>
+                    <label for="card_name" class="block text-sm font-medium text-gray-700">Name on Card</label>
+                    <input type="text" name="card_name" id="card_name" required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="John Doe">
+                </div>
+
+                <div>
+                    <label for="card_number" class="block text-sm font-medium text-gray-700">Card Number</label>
+                    <input type="text" name="card_number" id="card_number" required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="4242 4242 4242 4242">
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="expiry" class="block text-sm font-medium text-gray-700">Expiry Date</label>
+                        <input type="text" name="expiry" id="expiry" required
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="MM/YY">
+                    </div>
+                    <div>
+                        <label for="cvc" class="block text-sm font-medium text-gray-700">CVC</label>
+                        <input type="text" name="cvc" id="cvc" required
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="123">
+                    </div>
+                </div>
+
+                <div class="mt-6 flex items-center justify-between">
+                    <a href="{{ url_for('tour_details', tour_id=booking.tour_id) }}" 
+                        class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Tour
+                    </a>
+                    <button type="submit"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Pay Now
+                    </button>
+                </div>
+            </form>
+
+            <div class="px-4 py-3 bg-gray-50 text-xs text-gray-500 sm:px-6">
+                <div class="flex items-center">
+                    <i class="fas fa-lock mr-2"></i>
+                    Your payment information is secure and encrypted
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Format card number with spaces
+document.getElementById('card_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+    e.target.value = formattedValue.substring(0, 19);
+});
+
+// Format expiry date
+document.getElementById('expiry').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (value.length > 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+    e.target.value = value.substring(0, 5);
+});
+
+// Format CVC
+document.getElementById('cvc').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    e.target.value = value.substring(0, 3);
+});
+</script>
+{% endblock %} 

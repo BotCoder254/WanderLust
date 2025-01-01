@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg leading-6 font-medium text-gray-900">Notifications</h2>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Your recent notifications and updates.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="markAllRead()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        <i class="fas fa-check-double mr-2"></i>Mark All Read
+                    </button>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                {% if notifications %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for notification in notifications %}
+                        <li class="p-4 hover:bg-gray-50 {% if not notification.read %}bg-blue-50{% endif %}" id="notification-{{ notification._id }}">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-grow">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if notification.type == 'booking_expired' %}
+                                                <i class="fas fa-clock text-red-500 text-xl"></i>
+                                            {% elif notification.type == 'booking_confirmed' %}
+                                                <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                                            {% else %}
+                                                <i class="fas fa-bell text-blue-500 text-xl"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                            <p class="text-sm text-gray-500">{{ notification.message }}</p>
+                                            <p class="mt-1 text-xs text-gray-400">{{ notification.created_at.strftime('%B %d, %Y %I:%M %p') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    {% if not notification.read %}
+                                    <button onclick="markAsRead('{{ notification._id }}')" class="text-indigo-600 hover:text-indigo-900">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button onclick="deleteNotification('{{ notification._id }}')" class="text-red-600 hover:text-red-900">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-bell text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">No notifications yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch('/notifications/mark-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `notification_id=${notificationId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notification = document.getElementById(`notification-${notificationId}`);
+            notification.classList.remove('bg-blue-50');
+            // Hide the mark as read button
+            notification.querySelector('.text-indigo-600').remove();
+            updateNotificationCount();
+        }
+    });
+}
+
+function markAllRead() {
+    fetch('/notifications/mark-read', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.bg-blue-50').forEach(notification => {
+                notification.classList.remove('bg-blue-50');
+                const markReadBtn = notification.querySelector('.text-indigo-600');
+                if (markReadBtn) markReadBtn.remove();
+            });
+            updateNotificationCount();
+        }
+    });
+}
+
+function deleteNotification(notificationId) {
+    if (confirm('Are you sure you want to delete this notification?')) {
+        fetch('/notifications/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `notification_id=${notificationId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notification = document.getElementById(`notification-${notificationId}`);
+                notification.remove();
+                updateNotificationCount();
+            }
+        });
+    }
+}
+
+function updateNotificationCount() {
+    // Update the notification count in the navbar
+    fetch('/notifications/check')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        });
+}
+</script>
+{% endblock %} 

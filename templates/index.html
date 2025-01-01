@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative h-screen">
+    <div class="absolute inset-0">
+        <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2021&q=80" 
+             alt="Travel background" 
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gray-900 opacity-50"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto h-full flex items-center px-4 sm:px-6 lg:px-8">
+        <div class="text-center sm:text-left max-w-2xl">
+            <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Discover Your Next Adventure
+            </h1>
+            <p class="mt-6 text-xl text-gray-300 max-w-3xl">
+                Experience the world's most breathtaking destinations with Wanderlust. Your journey to unforgettable memories starts here.
+            </p>
+            <div class="mt-10 flex flex-col sm:flex-row gap-4">
+                <a href="{{ url_for('tours') }}" 
+                   class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    Explore Tours
+                </a>
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('register') }}" 
+                   class="inline-flex items-center justify-center px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-gray-900">
+                    Sign Up Now
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Tours Section -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-extrabold text-gray-900">Featured Tours</h2>
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {% for tour in tours %}
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-lg transition-shadow">
+                <div class="relative h-48">
+                    {% if tour.media and tour.media|length > 0 %}
+                    <img src="{{ tour.media[0] }}" alt="{{ tour.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400 text-4xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="absolute top-0 right-0 mt-2 mr-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {{ tour.duration }} days
+                        </span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-gray-900">{{ tour.name }}</h3>
+                    <p class="mt-2 text-gray-600">{{ tour.destination }}</p>
+                    <div class="mt-4 flex items-center">
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star {% if i < tour.rating|default(0)|round(0, 'floor') %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="ml-2 text-sm text-gray-500">{{ tour.review_count|default(0) }} reviews</span>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gray-900">${{ "%.2f"|format(tour.price) }}</span>
+                        <a href="{{ url_for('tour_details', tour_id=tour._id|string) }}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-12 text-center">
+            <a href="{{ url_for('tours') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                View All Tours
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Why Choose Wanderlust</h2>
+            <p class="mt-4 text-lg text-gray-500">Experience the difference with our premium travel services.</p>
+        </div>
+        <div class="mt-16 grid gap-8 md:grid-cols-4">
+            <div class="text-center">
+                <div class="flex justify-center">
+                    <div class="bg-indigo-100 rounded-lg p-3">
+                        <i class="fas fa-map-marked-alt text-3xl text-indigo-600"></i>
+                    </div>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Handpicked Destinations</h3>
+                <p class="mt-2 text-gray-500">Carefully selected locations to ensure the best travel experience.</p>
+            </div>
+            <div class="text-center">
+                <div class="flex justify-center">
+                    <div class="bg-indigo-100 rounded-lg p-3">
+                        <i class="fas fa-user-shield text-3xl text-indigo-600"></i>
+                    </div>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Safe & Secure</h3>
+                <p class="mt-2 text-gray-500">Your safety and security are our top priorities during your journey.</p>
+            </div>
+            <div class="text-center">
+                <div class="flex justify-center">
+                    <div class="bg-indigo-100 rounded-lg p-3">
+                        <i class="fas fa-dollar-sign text-3xl text-indigo-600"></i>
+                    </div>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Best Price Guarantee</h3>
+                <p class="mt-2 text-gray-500">We offer competitive prices without compromising on quality.</p>
+            </div>
+            <div class="text-center">
+                <div class="flex justify-center">
+                    <div class="bg-indigo-100 rounded-lg p-3">
+                        <i class="fas fa-headset text-3xl text-indigo-600"></i>
+                    </div>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">24/7 Support</h3>
+                <p class="mt-2 text-gray-500">Our dedicated team is always here to assist you.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Destinations Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Popular Destinations</h2>
+            <p class="mt-4 text-lg text-gray-500">Explore our most sought-after travel destinations.</p>
+        </div>
+        <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="relative rounded-lg overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1589308078059-be1415eab4c3" alt="Paris" class="w-full h-64 object-cover">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 class="text-xl font-semibold text-white">Paris, France</h3>
+                    <p class="text-sm text-gray-300">The City of Light</p>
+                </div>
+            </div>
+            <div class="relative rounded-lg overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1533050487297-09b450131914" alt="Tokyo" class="w-full h-64 object-cover">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 class="text-xl font-semibold text-white">Tokyo, Japan</h3>
+                    <p class="text-sm text-gray-300">Where Tradition Meets Future</p>
+                </div>
+            </div>
+            <div class="relative rounded-lg overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9" alt="Santorini" class="w-full h-64 object-cover">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 class="text-xl font-semibold text-white">Santorini, Greece</h3>
+                    <p class="text-sm text-gray-300">Paradise in the Aegean</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">What Our Travelers Say</h2>
+            <p class="mt-4 text-lg text-gray-500">Real experiences from our satisfied customers.</p>
+        </div>
+        <div class="mt-12 grid gap-8 lg:grid-cols-3">
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                    <div class="flex-shrink-0">
+                        <img class="h-12 w-12 rounded-full" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330" alt="Sarah">
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-semibold text-gray-900">Sarah Johnson</h4>
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600">"An incredible experience! The tour was well-organized, and our guide was knowledgeable and friendly. Will definitely book with Wanderlust again!"</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                    <div class="flex-shrink-0">
+                        <img class="h-12 w-12 rounded-full" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" alt="Michael">
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-semibold text-gray-900">Michael Chen</h4>
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600">"Perfect blend of adventure and comfort. The attention to detail and personalized service made our trip unforgettable."</p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                    <div class="flex-shrink-0">
+                        <img class="h-12 w-12 rounded-full" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80" alt="Emma">
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-semibold text-gray-900">Emma Davis</h4>
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600">"From booking to return, everything was seamless. The destinations were amazing, and the local experiences were authentic."</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-16 bg-indigo-600">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-white sm:text-4xl">Stay Updated</h2>
+            <p class="mt-4 text-xl text-indigo-200">Subscribe to our newsletter for exclusive travel deals and updates.</p>
+            <form class="mt-8 sm:flex justify-center max-w-2xl mx-auto">
+                <input type="email" required placeholder="Enter your email" class="w-full px-5 py-3 border-2 border-transparent placeholder-gray-500 focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white focus:border-white sm:max-w-xs rounded-md">
+                <div class="mt-3 rounded-md shadow sm:mt-0 sm:ml-3 sm:flex-shrink-0">
+                    <button type="submit" class="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Subscribe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %} 

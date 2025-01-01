@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderlust - Travel Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #4F46E5;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .nav-active::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{{ url_for('index') }}" class="text-2xl font-bold text-indigo-600">Wanderlust</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                        <!-- Admin Navigation -->
+                        <a href="{{ url_for('admin') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-chart-line mr-2"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('admin_bookings') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-calendar-check mr-2"></i>Bookings
+                        </a>
+                        <a href="{{ url_for('admin_guides') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-user-tie mr-2"></i>Guides
+                        </a>
+                        <a href="{{ url_for('admin_users') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-users mr-2"></i>Users
+                        </a>
+                        <a href="{{ url_for('admin_new_tour') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-plus-circle mr-2"></i>Add Tour
+                        </a>
+                        {% else %}
+                        <!-- User Navigation -->
+                        <div class="hidden md:flex space-x-4">
+                            <a href="{{ url_for('dashboard') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-chart-line mr-2"></i>Dashboard
+                            </a>
+                            <a href="{{ url_for('tours') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-globe mr-2"></i>Browse Tours
+                            </a>
+                            <a href="{{ url_for('bookings') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-ticket-alt mr-2"></i>My Bookings
+                            </a>
+                            <a href="{{ url_for('reviews') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-star mr-2"></i>My Reviews
+                            </a>
+                            <a href="{{ url_for('payments') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-credit-card mr-2"></i>Payments
+                            </a>
+                        </div>
+                        <!-- Mobile menu -->
+                        <div class="md:hidden">
+                            <button type="button" onclick="toggleMobileMenu()" class="text-gray-700 hover:text-indigo-600 px-2 py-1">
+                                <i class="fas fa-bars text-xl"></i>
+                            </button>
+                            <div id="mobileMenu" class="hidden absolute top-16 left-0 right-0 bg-white shadow-lg py-2">
+                                <a href="{{ url_for('dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50">
+                                    <i class="fas fa-chart-line mr-2"></i>Dashboard
+                                </a>
+                                <a href="{{ url_for('tours') }}" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50">
+                                    <i class="fas fa-globe mr-2"></i>Browse Tours
+                                </a>
+                                <a href="{{ url_for('bookings') }}" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50">
+                                    <i class="fas fa-ticket-alt mr-2"></i>My Bookings
+                                </a>
+                                <a href="{{ url_for('reviews') }}" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50">
+                                    <i class="fas fa-star mr-2"></i>My Reviews
+                                </a>
+                                <a href="{{ url_for('payments') }}" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50">
+                                    <i class="fas fa-credit-card mr-2"></i>Payments
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="ml-3 relative">
+                            <div class="relative inline-block text-left">
+                                <button type="button" onclick="toggleProfileMenu()" class="flex items-center justify-center w-full rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
+                                    <i class="fas fa-user-circle text-xl"></i>
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <div id="profileMenu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                                    <div class="py-1">
+                                        <a href="{{ url_for('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-user mr-2"></i>Profile
+                                        </a>
+                                        <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('notifications') }}" class="relative text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-bell"></i>
+                            <span id="notification-badge" class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full {% if not notification_count %}hidden{% endif %}">
+                                {{ notification_count }}
+                            </span>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="nav-link text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                        <a href="{{ url_for('register') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-16">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for message in messages %}
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if not current_user.is_authenticated %}
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">About Wanderlust</h3>
+                    <p class="text-gray-300">Your trusted partner for unforgettable adventures and travel experiences.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+                    <p class="text-gray-300">Email: info@wanderlust.com</p>
+                    <p class="text-gray-300">Phone: +1 (555) 123-4567</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-700 pt-8 text-center">
+                <p class="text-gray-300">&copy; {{ now.year }} Wanderlust. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const profileMenu = document.getElementById('profileMenu');
+            const mobileButton = event.target.closest('button');
+            
+            if (!mobileButton && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+            
+            if (!event.target.closest('button') && !profileMenu.classList.contains('hidden')) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+
+        // Real-time notifications
+        function initializeNotifications() {
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationCount = document.getElementById('notificationCount');
+            
+            // Check for new notifications every 30 seconds
+            setInterval(() => {
+                fetch('/notifications/check')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.count > 0) {
+                            notificationCount.textContent = data.count;
+                            notificationCount.classList.remove('hidden');
+                        } else {
+                            notificationCount.classList.add('hidden');
+                        }
+                    });
+            }, 30000);
+        }
+
+        // Initialize real-time features when document loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNotifications();
+        });
+    </script>
+</body>
+</html> 

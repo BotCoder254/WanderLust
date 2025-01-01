@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-semibold text-gray-900">{{ 'Edit' if tour else 'Add New' }} Tour Package</h1>
+            <a href="{{ url_for('admin') }}" class="text-indigo-600 hover:text-indigo-900">Back to Dashboard</a>
+        </div>
+
+        <form action="{{ url_for('admin_update_tour', tour_id=tour.id) if tour else url_for('admin_add_tour') }}" 
+              method="POST" enctype="multipart/form-data" class="mt-8 space-y-8">
+            <!-- Basic Information -->
+            <div class="bg-white shadow rounded-lg p-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Basic Information</h2>
+                <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Tour Name</label>
+                        <input type="text" name="name" id="name" required value="{{ tour.tour_data.name if tour else '' }}"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                    </div>
+                    <div>
+                        <label for="destination" class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                        <input type="text" name="destination" id="destination" required value="{{ tour.tour_data.destination if tour else '' }}"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea name="description" id="description" rows="4" required
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">{{ tour.tour_data.description if tour else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dates and Pricing -->
+            <div class="bg-white shadow rounded-lg p-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Dates and Pricing</h2>
+                <div class="grid grid-cols-1 gap-8 sm:grid-cols-3">
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" required 
+                            value="{{ tour.tour_data.start_date.strftime('%Y-%m-%d') if tour and tour.tour_data.start_date else '' }}"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                        <input type="date" name="end_date" id="end_date" required 
+                            value="{{ tour.tour_data.end_date.strftime('%Y-%m-%d') if tour and tour.tour_data.end_date else '' }}"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                    </div>
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price per Person</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-base">$</span>
+                            </div>
+                            <input type="number" name="price" id="price" required step="0.01" min="0"
+                                value="{{ tour.tour_data.price if tour else '' }}"
+                                class="block w-full pl-7 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tour Details -->
+            <div class="bg-white shadow rounded-lg p-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Tour Details</h2>
+                <div class="grid grid-cols-1 gap-8">
+                    <div>
+                        <label for="highlights" class="block text-sm font-medium text-gray-700 mb-2">Highlights (one per line)</label>
+                        <textarea name="highlights" id="highlights" rows="4"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">{{ '\n'.join(tour.tour_data.highlights) if tour else '' }}</textarea>
+                        <p class="mt-2 text-sm text-gray-500">Enter each highlight on a new line</p>
+                    </div>
+                    <div>
+                        <label for="included_services" class="block text-sm font-medium text-gray-700 mb-2">Included Services (one per line)</label>
+                        <textarea name="included_services" id="included_services" rows="4"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">{{ '\n'.join(tour.tour_data.included_services) if tour else '' }}</textarea>
+                        <p class="mt-2 text-sm text-gray-500">Enter each service on a new line</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add-ons -->
+            <div class="bg-white shadow rounded-lg p-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Optional Add-ons</h2>
+                <div id="add-ons-container" class="space-y-6">
+                    {% if tour and tour.tour_data.add_ons %}
+                        {% for addon in tour.tour_data.add_ons %}
+                        <div class="flex items-center gap-6">
+                            <input type="text" name="addon_names[]" placeholder="Add-on Name" value="{{ addon.name }}"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                            <div class="relative rounded-md shadow-sm w-48">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-base">$</span>
+                                </div>
+                                <input type="number" name="addon_prices[]" placeholder="Price" value="{{ addon.price }}" step="0.01" min="0"
+                                    class="block w-full pl-7 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                            </div>
+                            <button type="button" onclick="this.parentElement.remove()"
+                                class="p-2 text-red-600 hover:text-red-900 focus:outline-none">
+                                <i class="fas fa-trash text-lg"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <button type="button" onclick="addAddon()"
+                    class="mt-6 inline-flex items-center px-4 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-plus mr-2"></i> Add Add-on
+                </button>
+            </div>
+
+            <!-- Media -->
+            <div class="bg-white shadow rounded-lg p-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Media</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Images</label>
+                        <div class="mt-2 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                            {% if tour and tour.tour_data.media %}
+                                {% for media in tour.tour_data.media %}
+                                <div class="relative group">
+                                    <div class="aspect-w-4 aspect-h-3 rounded-lg overflow-hidden bg-gray-100">
+                                        <img src="{{ media }}" alt="Tour image" class="object-cover">
+                                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <button type="button" onclick="this.closest('.group').remove()"
+                                                class="text-white p-2 rounded-full bg-red-600 hover:bg-red-700 focus:outline-none">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="existing_media[]" value="{{ media }}">
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Add New Images</label>
+                        <div class="mt-2">
+                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-500 transition-colors">
+                                <div class="space-y-1 text-center">
+                                    <i class="fas fa-images text-gray-400 text-3xl mb-3"></i>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="media-upload"
+                                            class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                            <span>Upload images</span>
+                                            <input id="media-upload" name="media[]" type="file" class="sr-only" multiple accept="image/*" onchange="previewImages(event)">
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</p>
+                                </div>
+                            </div>
+                            <div id="image-preview" class="mt-4 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end mt-8">
+                <button type="submit"
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ 'Save Changes' if tour else 'Create Tour' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function addAddon() {
+    const container = document.getElementById('add-ons-container');
+    const addonDiv = document.createElement('div');
+    addonDiv.className = 'flex items-center gap-6';
+    addonDiv.innerHTML = `
+        <input type="text" name="addon_names[]" placeholder="Add-on Name"
+            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+        <div class="relative rounded-md shadow-sm w-48">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 sm:text-base">$</span>
+            </div>
+            <input type="number" name="addon_prices[]" placeholder="Price" step="0.01" min="0"
+                class="block w-full pl-7 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()"
+            class="p-2 text-red-600 hover:text-red-900 focus:outline-none">
+            <i class="fas fa-trash text-lg"></i>
+        </button>
+    `;
+    container.appendChild(addonDiv);
+}
+
+// Calculate duration based on start and end dates
+document.getElementById('start_date').addEventListener('change', updateDuration);
+document.getElementById('end_date').addEventListener('change', updateDuration);
+
+function updateDuration() {
+    const startDate = new Date(document.getElementById('start_date').value);
+    const endDate = new Date(document.getElementById('end_date').value);
+    if (startDate && endDate) {
+        const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+        document.getElementById('duration').value = duration;
+    }
+}
+
+function previewImages(event) {
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    
+    const files = event.target.files;
+    
+    for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'relative group';
+            div.innerHTML = `
+                <div class="aspect-w-4 aspect-h-3 rounded-lg overflow-hidden bg-gray-100">
+                    <img src="${e.target.result}" alt="Image preview" class="object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button type="button" onclick="this.closest('.group').remove()"
+                            class="text-white p-2 rounded-full bg-red-600 hover:bg-red-700 focus:outline-none">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Enable drag and drop
+const dropZone = document.querySelector('.border-dashed');
+const fileInput = document.getElementById('media-upload');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+}
+
+dropZone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+    previewImages({ target: { files } });
+}
+</script>
+{% endblock %}
+{% endblock %} 

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl font-semibold text-gray-900">Customer Dashboard</h1>
+        
+        <!-- Stats Overview -->
+        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Bookings -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-ticket-alt text-indigo-600 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Bookings</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">{{ booking_count }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Tours -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-calendar text-indigo-600 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Upcoming Tours</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">{{ upcoming_count }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Given -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-star text-indigo-600 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Reviews Given</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">{{ review_count }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Spent -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-dollar-sign text-indigo-600 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Spent</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">${{ "%.2f"|format(total_spent) }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Tours -->
+        <div class="mt-8">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-medium text-gray-900">Upcoming Tours</h2>
+                <a href="{{ url_for('tours') }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                    Browse More Tours <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            <div class="mt-4 grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {% for booking in upcoming_tours %}
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    {% if booking.tour.media and booking.tour.media|length > 0 %}
+                    <div class="h-48 w-full relative">
+                        <img src="{{ booking.tour.media[0] }}" alt="{{ booking.tour.name }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg font-medium text-gray-900">{{ booking.tour.name }}</h3>
+                        <div class="mt-2 text-sm text-gray-500">
+                            <p><i class="fas fa-map-marker-alt mr-2"></i>{{ booking.tour.destination }}</p>
+                            <p><i class="fas fa-calendar mr-2"></i>{{ booking.start_date.strftime('%B %d, %Y') }}</p>
+                            <p><i class="fas fa-users mr-2"></i>{{ booking.number_of_people }} people</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
+                                {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ booking.status|title }}
+                            </span>
+                            <a href="{{ url_for('tour_details', tour_id=booking.tour._id) }}" 
+                               class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                View Details <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+            <div class="mt-4 bg-white shadow overflow-hidden sm:rounded-lg">
+                <ul class="divide-y divide-gray-200" id="activityFeed">
+                    {% for activity in recent_activities %}
+                    <li class="px-4 py-4 sm:px-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas {{ activity.icon }} text-indigo-600 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">{{ activity.description }}</p>
+                                <p class="text-sm text-gray-500">{{ activity.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time activity feed updates
+function updateActivityFeed() {
+    fetch('/activity/recent')
+        .then(response => response.json())
+        .then(data => {
+            const feed = document.getElementById('activityFeed');
+            data.activities.forEach(activity => {
+                const li = document.createElement('li');
+                li.className = 'px-4 py-4 sm:px-6';
+                li.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas ${activity.icon} text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                            <p class="text-sm text-gray-500">${activity.timestamp}</p>
+                        </div>
+                    </div>
+                `;
+                feed.insertBefore(li, feed.firstChild);
+            });
+        });
+}
+
+// Update stats in real-time
+function updateStats() {
+    fetch('/dashboard/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('bookingCount').textContent = data.booking_count;
+            document.getElementById('upcomingCount').textContent = data.upcoming_count;
+            document.getElementById('reviewCount').textContent = data.review_count;
+            document.getElementById('totalSpent').textContent = `$${data.total_spent.toFixed(2)}`;
+        });
+}
+
+// Initialize real-time updates
+setInterval(updateActivityFeed, 30000); // Update activity feed every 30 seconds
+setInterval(updateStats, 60000); // Update stats every minute
+</script>
+{% endblock %} 

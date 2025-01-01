@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-semibold text-gray-900">Revenue Report</h1>
+            <div class="flex space-x-4">
+                <button onclick="exportReport()" class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
+                    <i class="fas fa-file-export mr-2"></i>Export
+                </button>
+                <a href="{{ url_for('admin_payments') }}" class="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Payments
+                </a>
+            </div>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="mt-6 bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+            <form id="filterForm" class="space-y-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" name="start_date" id="start_date"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                        <input type="date" name="end_date" id="end_date"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">
+                        Apply Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Revenue Summary -->
+        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        ${{ "%.2f"|format(report_data|sum(attribute='total_revenue')) }}
+                    </dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Transactions</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        {{ report_data|sum(attribute='transaction_count') }}
+                    </dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Average Transaction</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        ${{ "%.2f"|format(report_data|sum(attribute='total_revenue') / report_data|sum(attribute='transaction_count') if report_data|sum(attribute='transaction_count') > 0 else 0) }}
+                    </dd>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Breakdown -->
+        <div class="mt-8">
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transactions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Average</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for data in report_data %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ data._id.year }}-{{ '%02d'|format(data._id.month) }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${{ "%.2f"|format(data.total_revenue) }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ data.transaction_count }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    ${{ "%.2f"|format(data.total_revenue / data.transaction_count) }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('filterForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    window.location.href = `{{ url_for('admin_revenue_report') }}?start_date=${startDate}&end_date=${endDate}`;
+});
+
+function exportReport() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    // Convert table data to CSV
+    const rows = [
+        ['Period', 'Revenue', 'Transactions', 'Average'],
+        {% for data in report_data %}
+        [
+            '{{ data._id.year }}-{{ "%02d"|format(data._id.month) }}',
+            '{{ "%.2f"|format(data.total_revenue) }}',
+            '{{ data.transaction_count }}',
+            '{{ "%.2f"|format(data.total_revenue / data.transaction_count) }}'
+        ],
+        {% endfor %}
+    ];
+    
+    const csvContent = rows.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'revenue_report.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+</script>
+{% endblock %} 

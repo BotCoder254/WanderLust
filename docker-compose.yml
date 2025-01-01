@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    networks:
+      - wanderlust_network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - wanderlust_network
+
+volumes:
+  mongodb_data:
+  static_volume:
+
+networks:
+  wanderlust_network:
+    driver: bridge 
