@@ -135,6 +135,75 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Email Preferences Section -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mt-6">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Email Preferences</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage your email notification settings</p>
+            </div>
+            <div class="border-t border-gray-200">
+                <form action="{{ url_for('update_email_preferences') }}" method="POST">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="new_tours" name="new_tours" type="checkbox" 
+                                           class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                           {% if email_preferences.new_tours %}checked{% endif %}>
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="new_tours" class="font-medium text-gray-700">New Tour Notifications</label>
+                                    <p class="text-gray-500">Receive notifications when new tours are added</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="payment_receipts" name="payment_receipts" type="checkbox"
+                                           class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                           {% if email_preferences.payment_receipts %}checked{% endif %}>
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="payment_receipts" class="font-medium text-gray-700">Payment Receipts</label>
+                                    <p class="text-gray-500">Receive email receipts for your payments</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="booking_reminders" name="booking_reminders" type="checkbox"
+                                           class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                           {% if email_preferences.booking_reminders %}checked{% endif %}>
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="booking_reminders" class="font-medium text-gray-700">Booking Reminders</label>
+                                    <p class="text-gray-500">Receive reminders about your upcoming tours</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="promotional" name="promotional" type="checkbox"
+                                           class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                           {% if email_preferences.promotional %}checked{% endif %}>
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="promotional" class="font-medium text-gray-700">Promotional Emails</label>
+                                    <p class="text-gray-500">Receive special offers and promotional content</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                        <button type="submit"
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 

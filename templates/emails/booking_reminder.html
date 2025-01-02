@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Your Upcoming Tour Reminder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 8px 8px 0 0;
+        }
+        .header img {
+            max-width: 200px;
+            height: auto;
+        }
+        .content {
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tour-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #4338CA;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #F3F4F6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .countdown {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4F46E5;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .checklist {
+            background: #F9FAFB;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            color: #4B5563;
+        }
+        .checklist-item:before {
+            content: "✓";
+            color: #059669;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+                padding: 10px !important;
+            }
+            .content {
+                padding: 15px !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #F3F4F6;">
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/logo.png', _external=True) }}" alt="Logo">
+        </div>
+        <div class="content">
+            <h1 style="color: #1F2937; margin-bottom: 20px; text-align: center;">Your Adventure Begins Soon!</h1>
+            <p style="color: #4B5563;">Hi {{ user.name }},</p>
+            <p style="color: #4B5563;">Your upcoming tour to {{ tour.destination }} is just around the corner!</p>
+            
+            <div class="countdown">
+                {{ (booking.start_date - now).days }} Days to Go!
+            </div>
+            
+            <img src="{{ tour.media[0] }}" alt="{{ tour.name }}" class="tour-image">
+            
+            <div class="info-box">
+                <h2 style="color: #1F2937; margin-top: 0;">Tour Details</h2>
+                <ul style="color: #4B5563; padding-left: 20px;">
+                    <li>Tour: {{ tour.name }}</li>
+                    <li>Start Date: {{ booking.start_date.strftime('%B %d, %Y') }}</li>
+                    <li>Duration: {{ tour.duration }} days</li>
+                    <li>Number of People: {{ booking.number_of_people }}</li>
+                </ul>
+            </div>
+            
+            <div class="checklist">
+                <h3 style="color: #1F2937; margin-top: 0;">Pre-Trip Checklist</h3>
+                <div class="checklist-item">Pack weather-appropriate clothing</div>
+                <div class="checklist-item">Check passport validity</div>
+                <div class="checklist-item">Arrange transportation to meeting point</div>
+                <div class="checklist-item">Review tour itinerary</div>
+                <div class="checklist-item">Pack essential medications</div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ url_for('bookings', _external=True) }}" class="btn">View Booking Details</a>
+            </div>
+            
+            <p style="color: #4B5563; margin-top: 30px;">
+                If you have any questions before your trip, our support team is here to help!
+            </p>
+        </div>
+        <div class="footer">
+            <p>© {{ now.year }} Your Travel Company. All rights reserved.</p>
+            <p>You're receiving this email because you have an upcoming tour. To update your email preferences, visit your <a href="{{ url_for('profile', _external=True) }}" style="color: #4F46E5;">profile settings</a>.</p>
+        </div>
+    </div>
+</body>
+</html> 

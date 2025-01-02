@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 from werkzeug.security import generate_password_hash
 import stripe
+from flask_mail import Mail, Message
 
 from config import Config
 from models.user import User
@@ -29,6 +30,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Initialize Flask-Mail
+mail = Mail(app)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_by_id(db, user_id)
@@ -40,6 +44,81 @@ def inject_now():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def send_email(to, subject, template, **kwargs):
+    msg = Message(subject,
+                 sender=app.config['MAIL_DEFAULT_SENDER'],
+                 recipients=[to])
+    msg.html = render_template(template, **kwargs)
+    mail.send(msg)
+
+def send_new_tour_notification(tour):
+    # Get all verified users who have opted in for new tour notifications
+    users = db.users.find({
+        'is_verified': True,
+        'email_preferences.new_tours': True
+    })
+    
+    for user in users:
+        try:
+            send_email(
+                user['email'],
+                'New Tour Available!',
+                'emails/new_tour_notification.html',
+                user=User(user),
+                tour=tour
+            )
+        except Exception as e:
+            print(f"Failed to send email to {user['email']}: {str(e)}")
+
+def send_payment_receipt(payment, booking):
+    try:
+        # Get user and tour details
+        user = User.get_by_id(db, str(booking['user_id']))
+        
+        # Check if user wants payment receipts
+        if not user.email_preferences.get('payment_receipts', True):
+            return
+            
+        tour = Tour.get_by_id(db, str(booking['tour_id']))
+        
+        booking_data = {
+            'user': user,
+            'tour': tour,
+            'start_date': booking['start_date'],
+            'number_of_people': booking['number_of_people']
+        }
+        
+        send_email(
+            user.email,
+            'Payment Receipt - Your Travel Booking',
+            'emails/payment_receipt.html',
+            booking=booking_data,
+            payment=payment
+        )
+    except Exception as e:
+        print(f"Failed to send payment receipt: {str(e)}")
+
+def send_booking_reminder(booking):
+    try:
+        user = User.get_by_id(db, str(booking['user_id']))
+        
+        # Check if user wants booking reminders
+        if not user.email_preferences.get('booking_reminders', True):
+            return
+            
+        tour = Tour.get_by_id(db, str(booking['tour_id']))
+        
+        send_email(
+            user.email,
+            'Upcoming Tour Reminder',
+            'emails/booking_reminder.html',
+            user=user,
+            tour=tour,
+            booking=booking
+        )
+    except Exception as e:
+        print(f"Failed to send booking reminder: {str(e)}")
 
 # Routes
 @app.route('/')
@@ -68,6 +147,10 @@ def login():
         
         if not user.check_password(password):
             flash('Invalid password')
+            return redirect(url_for('login'))
+        
+        if not user.is_verified:
+            flash('Please verify your email before logging in.')
             return redirect(url_for('login'))
         
         login_user(user)
@@ -106,9 +189,17 @@ def register():
         try:
             user = User.create(db, name, email, password)
             if user:
-                login_user(user)
-                flash('Registration successful!')
-                return redirect(url_for('dashboard'))
+                # Generate verification token and send email
+                token = user.generate_verification_token()
+                verify_url = url_for('verify_email', token=token, _external=True)
+                send_email(user.email,
+                         'Verify Your Email',
+                         'emails/verify_email.html',
+                         user=user,
+                         verify_url=verify_url)
+                
+                flash('Registration successful! Please check your email to verify your account.')
+                return redirect(url_for('login'))
             else:
                 flash('Registration failed. Please try again.')
         except Exception as e:
@@ -117,6 +208,70 @@ def register():
         return redirect(url_for('register'))
     
     return render_template('register.html')
+
+@app.route('/verify-email/<token>')
+def verify_email(token):
+    user = User.verify_email_token(db, token)
+    if user:
+        user.verify_email(db)
+        flash('Your email has been verified! You can now log in.')
+    else:
+        flash('The verification link is invalid or has expired.')
+    return redirect(url_for('login'))
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        user = User.get_by_email(db, email)
+        
+        if user:
+            token = user.generate_reset_token()
+            reset_url = url_for('reset_password', token=token, _external=True)
+            send_email(user.email,
+                     'Reset Your Password',
+                     'emails/reset_password.html',
+                     user=user,
+                     reset_url=reset_url)
+            
+            flash('Check your email for instructions to reset your password.')
+            return redirect(url_for('login'))
+        
+        flash('No account found with that email address.')
+        return redirect(url_for('reset_password_request'))
+    
+    return render_template('reset_password.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    user = User.verify_reset_token(db, token)
+    if not user:
+        flash('The password reset link is invalid or has expired.')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        if not password or not confirm_password:
+            flash('Both password fields are required.')
+            return redirect(url_for('reset_password', token=token))
+        
+        if password != confirm_password:
+            flash('Passwords do not match.')
+            return redirect(url_for('reset_password', token=token))
+        
+        user.set_password(db, password)
+        flash('Your password has been reset. You can now log in.')
+        return redirect(url_for('login'))
+    
+    return render_template('reset_password_confirm.html', token=token)
 
 @app.route('/logout')
 @login_required
@@ -411,6 +566,9 @@ def admin_add_tour():
             add_ons=add_ons,
             media=media_urls
         )
+        
+        # Send notification to all users about the new tour
+        send_new_tour_notification(tour)
         
         flash('Tour added successfully')
     except Exception as e:
@@ -925,7 +1083,8 @@ def profile():
                          bookings=bookings,
                          booking_count=booking_count,
                          current_page=page,
-                         total_pages=total_pages)
+                         total_pages=total_pages,
+                         email_preferences=current_user.email_preferences)
 
 @app.route('/profile/update', methods=['POST'])
 @login_required
@@ -1244,6 +1403,11 @@ def stripe_webhook():
         payment = Payment.get_by_payment_intent_id(db, payment_intent['id'])
         if payment:
             payment.confirm_payment(db, payment_intent['payment_method'])
+            
+            # Get booking details and send receipt
+            booking = db.bookings.find_one({'_id': payment.payment_data['booking_id']})
+            if booking:
+                send_payment_receipt(payment.payment_data, booking)
     
     return jsonify({'received': True})
 
@@ -1594,28 +1758,24 @@ def delete_review(review_id):
                 }
             }
         ]
-        rating_stats = list(db.reviews.aggregate(pipeline))
         
-        if rating_stats:
+        result = list(db.reviews.aggregate(pipeline))
+        if result:
             db.tours.update_one(
                 {'_id': review['tour_id']},
-                {
-                    '$set': {
-                        'rating': rating_stats[0]['avg_rating'],
-                        'review_count': rating_stats[0]['count']
-                    }
-                }
+                {'$set': {
+                    'rating': result[0]['avg_rating'],
+                    'review_count': result[0]['count']
+                }}
             )
         else:
-            # No reviews left, reset rating
+            # No reviews left, reset rating and count
             db.tours.update_one(
                 {'_id': review['tour_id']},
-                {
-                    '$set': {
-                        'rating': 0,
-                        'review_count': 0
-                    }
-                }
+                {'$set': {
+                    'rating': 0,
+                    'review_count': 0
+                }}
             )
         
         flash('Review deleted successfully')
@@ -1804,6 +1964,25 @@ def check_expired_bookings():
         'status': 'expired',
         'created_at': {'$lt': four_days_ago}
     })
+
+# Add route for updating email preferences
+@app.route('/profile/email-preferences', methods=['POST'])
+@login_required
+def update_email_preferences():
+    try:
+        preferences = {
+            'new_tours': bool(request.form.get('new_tours')),
+            'payment_receipts': bool(request.form.get('payment_receipts')),
+            'booking_reminders': bool(request.form.get('booking_reminders')),
+            'promotional': bool(request.form.get('promotional'))
+        }
+        
+        current_user.update_email_preferences(db, preferences)
+        flash('Email preferences updated successfully')
+    except Exception as e:
+        flash(f'Error updating email preferences: {str(e)}')
+    
+    return redirect(url_for('profile'))
 
 if __name__ == '__main__':
     # Initialize the database

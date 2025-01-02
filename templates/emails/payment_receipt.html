@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Payment Receipt</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 8px 8px 0 0;
+        }
+        .header img {
+            max-width: 200px;
+            height: auto;
+        }
+        .content {
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .receipt-box {
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .receipt-header {
+            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #4B5563;
+        }
+        .total-row {
+            border-top: 2px solid #E5E7EB;
+            margin-top: 15px;
+            padding-top: 15px;
+            font-weight: 700;
+            color: #1F2937;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #4338CA;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        .success-icon {
+            text-align: center;
+            margin: 20px 0;
+            color: #059669;
+            font-size: 48px;
+        }
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+                padding: 10px !important;
+            }
+            .content {
+                padding: 15px !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #F3F4F6;">
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/logo.png', _external=True) }}" alt="Logo">
+        </div>
+        <div class="content">
+            <div class="success-icon">✓</div>
+            <h1 style="color: #1F2937; margin-bottom: 20px; text-align: center;">Payment Successful!</h1>
+            <p style="color: #4B5563;">Hi {{ booking.user.name }},</p>
+            <p style="color: #4B5563;">Thank you for your payment. Here's your receipt for the tour booking:</p>
+            
+            <div class="receipt-box">
+                <div class="receipt-header">
+                    <h2 style="color: #1F2937; margin: 0;">Receipt</h2>
+                    <p style="color: #6B7280; margin: 5px 0;">Transaction ID: {{ payment.id }}</p>
+                    <p style="color: #6B7280; margin: 5px 0;">Date: {{ payment.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                
+                <div class="receipt-row">
+                    <span>Tour</span>
+                    <span>{{ booking.tour.name }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span>Destination</span>
+                    <span>{{ booking.tour.destination }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span>Start Date</span>
+                    <span>{{ booking.start_date.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span>Number of People</span>
+                    <span>{{ booking.number_of_people }}</span>
+                </div>
+                <div class="receipt-row">
+                    <span>Price per Person</span>
+                    <span>${{ "%.2f"|format(booking.tour.price) }}</span>
+                </div>
+                
+                <div class="receipt-row total-row">
+                    <span>Total Amount</span>
+                    <span>${{ "%.2f"|format(payment.amount) }}</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ url_for('bookings', _external=True) }}" class="btn">View Booking Details</a>
+            </div>
+            
+            <p style="color: #4B5563; margin-top: 30px;">
+                If you have any questions about your booking, please don't hesitate to contact our support team.
+            </p>
+        </div>
+        <div class="footer">
+            <p>© {{ now.year }} Your Travel Company. All rights reserved.</p>
+            <p>This is an automated email, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html> 

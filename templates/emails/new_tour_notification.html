@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>New Tour Available!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 8px 8px 0 0;
+        }
+        .header img {
+            max-width: 200px;
+            height: auto;
+        }
+        .content {
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tour-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #4338CA;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        .highlight {
+            background: #F3F4F6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4F46E5;
+        }
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+                padding: 10px !important;
+            }
+            .content {
+                padding: 15px !important;
+            }
+            .tour-image {
+                height: 200px !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #F3F4F6;">
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/logo.png', _external=True) }}" alt="Logo">
+        </div>
+        <div class="content">
+            <h1 style="color: #1F2937; margin-bottom: 20px;">New Adventure Awaits!</h1>
+            <p style="color: #4B5563;">Hi {{ user.name }},</p>
+            <p style="color: #4B5563;">We're excited to announce a new tour that might interest you!</p>
+            
+            <img src="{{ tour.media[0] }}" alt="{{ tour.name }}" class="tour-image">
+            
+            <div class="highlight">
+                <h2 style="color: #1F2937; margin-top: 0;">{{ tour.name }}</h2>
+                <p style="color: #4B5563;">{{ tour.description }}</p>
+                <p class="price">${{ "%.2f"|format(tour.price) }}</p>
+                <ul style="color: #4B5563; padding-left: 20px;">
+                    <li>Duration: {{ tour.duration }} days</li>
+                    <li>Destination: {{ tour.destination }}</li>
+                    <li>Starting: {{ tour.start_date.strftime('%B %d, %Y') }}</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ url_for('tour_details', tour_id=tour._id, _external=True) }}" class="btn">View Tour Details</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© {{ now.year }} Your Travel Company. All rights reserved.</p>
+            <p>If you prefer not to receive these notifications, you can <a href="{{ url_for('profile', _external=True) }}" style="color: #4F46E5;">update your preferences</a></p>
+        </div>
+    </div>
+</body>
+</html> 
