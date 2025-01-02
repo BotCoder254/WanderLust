@@ -1,6 +1,28 @@
 from datetime import datetime, timedelta
-from app import db, send_booking_reminder
+from celery import Celery
+from celery.schedules import crontab
+from app import db, send_booking_reminder, check_expired_bookings
 
+# Initialize Celery
+celery = Celery('tasks', broker='redis://redis:6379/0')
+
+# Configure Celery
+celery.conf.update(
+    timezone='UTC',
+    enable_utc=True,
+    beat_schedule={
+        'send-booking-reminders': {
+            'task': 'tasks.send_booking_reminders',
+            'schedule': crontab(hour=9, minute=0)  # Run daily at 9 AM UTC
+        },
+        'check-expired-bookings': {
+            'task': 'tasks.check_expired_bookings_task',
+            'schedule': crontab(hour='*/1')  # Run every hour
+        }
+    }
+)
+
+@celery.task
 def send_booking_reminders():
     """Send reminders for upcoming tours"""
     # Get bookings that start in 7 days
@@ -24,5 +46,13 @@ def send_booking_reminders():
         except Exception as e:
             print(f"Failed to send reminder for booking {booking['_id']}: {str(e)}")
 
+@celery.task
+def check_expired_bookings_task():
+    """Check and update expired bookings"""
+    try:
+        check_expired_bookings()
+    except Exception as e:
+        print(f"Failed to check expired bookings: {str(e)}")
+
 if __name__ == '__main__':
-    send_booking_reminders() 
+    celery.start() 

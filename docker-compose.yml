@@ -4,16 +4,24 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "5000:5000"
     volumes:
       - .:/app
       - static_volume:/app/static
-    env_file:
-      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - DATABASE_NAME=travel_db
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USE_TLS=${MAIL_USE_TLS}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - mongodb
-    networks:
-      - wanderlust_network
+      - redis
+    restart: always
 
   mongodb:
     image: mongo:latest
@@ -21,8 +29,47 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-    networks:
-      - wanderlust_network
+    restart: always
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  worker:
+    build: .
+    command: celery -A tasks.celery worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - DATABASE_NAME=travel_db
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USE_TLS=${MAIL_USE_TLS}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - mongodb
+    restart: always
+
+  scheduler:
+    build: .
+    command: celery -A tasks.celery beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - DATABASE_NAME=travel_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - mongodb
+    restart: always
 
 volumes:
   mongodb_data:

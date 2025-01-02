@@ -1,21 +1,16 @@
 # Use Python 3.9 slim image as base
 FROM python:3.9-slim
 
-# Set working directory
-WORKDIR /app
-
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
+
+# Set work directory
+WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        libpq-dev \
-    && apt-get clean \
+RUN apt-get update && apt-get install -y \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,14 +20,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Create upload directory
-RUN mkdir -p static/uploads
+# Create directory for uploaded files
+RUN mkdir -p /app/static/uploads && chmod 777 /app/static/uploads
 
-# Set permissions
-RUN chmod -R 755 static/uploads
+# Create directory for logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
 
 # Expose port
-EXPOSE 8000
+EXPOSE 5000
 
-# Start command
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"] 
+# Run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"] 
