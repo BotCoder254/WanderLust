@@ -46,11 +46,38 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def send_email(to, subject, template, **kwargs):
-    msg = Message(subject,
-                 sender=app.config['MAIL_DEFAULT_SENDER'],
-                 recipients=[to])
-    msg.html = render_template(template, **kwargs)
-    mail.send(msg)
+    try:
+        print(f"\nAttempting to send email:")
+        print(f"To: {to}")
+        print(f"Subject: {subject}")
+        print(f"Template: {template}")
+        print(f"Using SMTP: {app.config['MAIL_SERVER']}:{app.config['MAIL_PORT']}")
+        print(f"Username: {app.config['MAIL_USERNAME']}")
+        print(f"TLS Enabled: {app.config['MAIL_USE_TLS']}")
+        
+        msg = Message(
+            subject,
+            sender=app.config['MAIL_DEFAULT_SENDER'],
+            recipients=[to]
+        )
+        msg.html = render_template(template, **kwargs)
+        
+        # Try to establish SMTP connection first
+        with mail.connect() as conn:
+            print("SMTP Connection established successfully")
+            conn.send(msg)
+            print("Email sent successfully")
+        
+        return True
+    except Exception as e:
+        print(f"\nError sending email:")
+        print(f"Error type: {type(e)}")
+        print(f"Error message: {str(e)}")
+        if hasattr(e, 'smtp_error'):
+            print(f"SMTP error: {e.smtp_error}")
+        if hasattr(e, 'smtp_code'):
+            print(f"SMTP code: {e.smtp_code}")
+        return False
 
 def send_new_tour_notification(tour):
     # Get all verified users who have opted in for new tour notifications
@@ -1500,6 +1527,7 @@ def admin_revenue_report():
     return render_template('admin/revenue_report.html', report_data=report_data)
 
 def initialize_database():
+    """Initialize the database with admin user if not exists."""
     # Create admin user if not exists
     admin_user = db.users.find_one({'email': Config.ADMIN_EMAIL})
     if not admin_user:
@@ -1507,28 +1535,20 @@ def initialize_database():
         db.users.insert_one({
             'email': Config.ADMIN_EMAIL,
             'password': admin_password,
-            'role': 'admin',
             'name': 'Admin User',
+            'is_admin': True,
+            'is_verified': True,
             'created_at': datetime.utcnow(),
-            'is_active': True
+            'email_preferences': {
+                'new_tours': True,
+                'payment_receipts': True,
+                'booking_reminders': True,
+                'promotional': True
+            }
         })
-        print(f"Admin user created successfully with email: {Config.ADMIN_EMAIL}")
-        
-    # Create test customer if not exists
-    test_customer = db.users.find_one({'email': 'customer@test.com'})
-    if not test_customer:
-        customer_password = generate_password_hash('customer123')
-        db.users.insert_one({
-            'email': 'customer@test.com',
-            'password': customer_password,
-            'role': 'customer',
-            'name': 'Test Customer',
-            'created_at': datetime.utcnow(),
-            'is_active': True,
-            'preferred_destinations': ['Paris', 'Tokyo', 'New York'],
-            'phone': '+1234567890'
-        })
-        print("Test customer created successfully with email: customer@test.com")
+        print(f"Admin user created with email: {Config.ADMIN_EMAIL}")
+    else:
+        print("Admin user already exists")
 
 @app.route('/reviews')
 @login_required
@@ -1780,6 +1800,7 @@ def delete_review(review_id):
         
         flash('Review deleted successfully')
         return redirect(url_for('reviews'))
+        
     except Exception as e:
         flash(f'Error deleting review: {str(e)}')
         return redirect(url_for('reviews'))
