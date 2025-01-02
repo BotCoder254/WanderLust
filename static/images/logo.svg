@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background gradient -->
+    <defs>
+        <linearGradient id="gradient" x1="0" y1="0" x2="200" y2="50" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" style="stop-color:#4F46E5"/>
+            <stop offset="100%" style="stop-color:#7C3AED"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Mountain icon -->
+    <path d="M30 10L45 40H15L30 10Z" fill="url(#gradient)"/>
+    <path d="M20 25L30 40H10L20 25Z" fill="url(#gradient)" opacity="0.8"/>
+    
+    <!-- Company name -->
+    <text x="60" y="33" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="url(#gradient)">
+        Wanderlust
+    </text>
+    
+    <!-- Tagline -->
+    <text x="60" y="45" font-family="Arial, sans-serif" font-size="10" fill="#6B7280">
+        Explore the World
+    </text>
+</svg> 
